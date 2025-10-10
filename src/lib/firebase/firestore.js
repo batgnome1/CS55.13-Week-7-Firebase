@@ -69,7 +69,7 @@ const updateWithRating = async (
 
   transaction.set(newRatingDocument, {
     ...review,
-    timestamp: /*Timestamp.fromDate(new Date()), */ Timestamp.now(),
+    timestamp: Timestamp.fromDate(new Date()),
   });
 };
 
