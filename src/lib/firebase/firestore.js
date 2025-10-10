@@ -73,8 +73,6 @@ const updateWithRating = async (
   });
 };
 
-
-
 /**
  * Add a review to a restaurant and update its rating statistics
  * This function is currently a placeholder and not implemented
