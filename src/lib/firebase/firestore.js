@@ -112,6 +112,39 @@ export async function addReviewToRestaurant(db, restaurantId, review) {
 
 
 /**
+ * Apply filtering and sorting to a Firestore query
+ * This function builds a query with filters for category, city, price, and sorting options
+ * @param {Object} q - The base Firestore query
+ * @param {Object} filters - Filter options object
+ * @param {string} filters.category - Filter by restaurant category
+ * @param {string} filters.city - Filter by city location
+ * @param {string} filters.price - Filter by price level (length of string determines price)
+ * @param {string} filters.sort - Sort by "Rating" or "Review" count
+ * @returns {Object} The modified query with filters applied
+ */
+function applyQueryFilters(q, { category, city, price, sort }) {
+  // Filter by restaurant category if specified
+  if (category) {
+    q = query(q, where("category", "==", category));
+  }
+  // Filter by city if specified
+  if (city) {
+    q = query(q, where("city", "==", city));
+  }
+  // Filter by price level (price string length determines the level)
+  if (price) {
+    q = query(q, where("price", "==", price.length));
+  }
+  // Sort by average rating (default) or by number of reviews
+  if (sort === "Rating" || !sort) {
+    q = query(q, orderBy("avgRating", "desc"));
+  } else if (sort === "Review") {
+    q = query(q, orderBy("numRatings", "desc"));
+  }
+  return q;
+}
+
+/**
  * Get restaurants from Firestore with optional filtering
  * This function performs a one-time read of restaurant data with server-side filtering
  * @param {Object} db - Firestore database instance (defaults to client db)
