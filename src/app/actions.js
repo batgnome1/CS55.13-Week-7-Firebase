@@ -1,4 +1,4 @@
-//"use server";
+'use server'
 
 import { addReviewToRestaurant } from "@/src/lib/firebase/firestore.js";
 import { getAuthenticatedAppForUser } from "@/src/lib/firebase/serverApp.js";
