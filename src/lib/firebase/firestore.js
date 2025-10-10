@@ -110,6 +110,7 @@ export async function addReviewToRestaurant(db, restaurantId, review) {
 }
 
 
+
 /**
  * Apply filtering and sorting to a Firestore query
  * This function builds a query with filters for category, city, price, and sorting options
