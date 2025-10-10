@@ -71,7 +71,7 @@ const updateWithRating = async (
     ...review,
     timestamp: Timestamp.fromDate(new Date()),
   });
-}
+};
 
 
 /**
