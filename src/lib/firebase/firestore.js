@@ -1,3 +1,19 @@
+/**
+ * Firestore Database Operations Module
+ * 
+ * This module provides functions for interacting with the Firestore database,
+ * including CRUD operations for restaurants and reviews, real-time listeners,
+ * and data filtering/sorting capabilities.
+ * 
+ * Key Features:
+ * - Restaurant management (create, read, update)
+ * - Review management with rating calculations
+ * - Real-time data synchronization
+ * - Advanced querying with filters and sorting
+ * - Transaction support for data consistency
+ * - Development data seeding
+ */
+
 // Import function to generate fake restaurant and review data for development/testing
 import { generateFakeRestaurantsAndReviews } from "@/src/lib/fakeRestaurants.js";
 
@@ -42,7 +58,7 @@ export async function updateRestaurantImageReference(
 
 /**
  * Helper function to update restaurant rating statistics within a transaction
- * This function is currently a placeholder and not implemented
+ * This function calculates new rating statistics and adds the review atomically
  * @param {Object} transaction - Firestore transaction object
  * @param {Object} docRef - Reference to the restaurant document
  * @param {Object} newRatingDocument - The new rating document being added
@@ -55,18 +71,28 @@ const updateWithRating = async (
   newRatingDocument,
   review
 ) => {
+  // Get the current restaurant data within the transaction
   const restaurant = await transaction.get(docRef);
   const data = restaurant.data();
+  
+  // Calculate new rating statistics
+  // Increment the total number of ratings (default to 1 if no ratings exist)
   const newNumRatings = data?.numRatings ? data.numRatings + 1 : 1;
+  
+  // Add the new rating to the sum (default to 0 if no sum exists)
   const newSumRating = (data?.sumRating || 0) + Number(review.rating);
+  
+  // Calculate the new average rating
   const newAverage = newSumRating / newNumRatings;
 
+  // Update the restaurant document with new rating statistics
   transaction.update(docRef, {
     numRatings: newNumRatings,
     sumRating: newSumRating,
     avgRating: newAverage,
   });
 
+  // Add the new review document with current timestamp
   transaction.set(newRatingDocument, {
     ...review,
     timestamp: Timestamp.fromDate(new Date()),
@@ -76,13 +102,14 @@ const updateWithRating = async (
 
 /**
  * Add a review to a restaurant and update its rating statistics
- * This function is currently a placeholder and not implemented
+ * This function uses a transaction to ensure data consistency when adding reviews
  * @param {Object} db - Firestore database instance
  * @param {string} restaurantId - The ID of the restaurant to add the review to
  * @param {Object} review - The review data to add
  * @returns {Promise<void>} Promise that resolves when the review is added
  */
 export async function addReviewToRestaurant(db, restaurantId, review) {
+        // Validate required parameters
         if (!restaurantId) {
                 throw new Error("No restaurant ID has been provided.");
         }
@@ -92,16 +119,19 @@ export async function addReviewToRestaurant(db, restaurantId, review) {
         }
 
         try {
+                // Create references to the restaurant document and new rating document
                 const docRef = doc(collection(db, "restaurants"), restaurantId);
                 const newRatingDocument = doc(
                         collection(db, `restaurants/${restaurantId}/ratings`)
                 );
 
-                // corrected line
+                // Use a transaction to atomically update restaurant stats and add the review
+                // This ensures data consistency even if multiple reviews are added simultaneously
                 await runTransaction(db, transaction =>
                         updateWithRating(transaction, docRef, newRatingDocument, review)
                 );
         } catch (error) {
+                // Log the error and re-throw it for the calling code to handle
                 console.error(
                         "There was an error adding the rating to the restaurant",
                         error
@@ -133,6 +163,7 @@ function applyQueryFilters(q, { category, city, price, sort }) {
     q = query(q, where("city", "==", city));
   }
   // Filter by price level (price string length determines the level)
+  // e.g., "$" = 1, "$$" = 2, "$$$" = 3, "$$$$" = 4
   if (price) {
     q = query(q, where("price", "==", price.length));
   }
@@ -169,6 +200,7 @@ export async function getRestaurants(db = db, filters = {}) {
       ...doc.data(), // Spread all document data
       // Convert Firestore timestamp to JavaScript Date object
       // Only plain objects can be passed to Client Components from Server Components
+      // This conversion is necessary for Next.js serialization requirements
       timestamp: doc.data().timestamp.toDate(),
     };
   });
@@ -279,6 +311,7 @@ export async function getReviewsByRestaurantId(db, restaurantId) {
       ...doc.data(), // Spread all document data
       // Convert Firestore timestamp to JavaScript Date object
       // Only plain objects can be passed to Client Components from Server Components
+      // This conversion is necessary for Next.js serialization requirements
       timestamp: doc.data().timestamp.toDate(),
     };
   });
