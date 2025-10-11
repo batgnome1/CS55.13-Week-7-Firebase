@@ -36,7 +36,9 @@ const ReviewDialog = ({
     <dialog ref={dialog} onMouseDown={handleClick}>
       <form
         action={handleReviewFormSubmission}
-        onSubmit={() => {
+        onSubmit={(e) => {
+            const text = e.target.text.value; // "text" matches your input's name
+            console.log("Review text being sent:", text);
           handleClose();
         }}
       >
