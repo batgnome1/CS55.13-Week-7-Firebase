@@ -40,7 +40,8 @@ const ReviewDialog = ({
             const text = e.target.text.value;
             const rating = e.target.rating.value;
             const userId = e.target.userId.value;
-            console.log("Review text being sent:", text, rating, userId);
+            const restId = e.target.restarauntId.value;
+            console.log("Review text being sent:", text, "/", rating, "/", userId, "/", restId);
           handleClose();
         }}
       >
